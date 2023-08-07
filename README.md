@@ -29,3 +29,8 @@ This example creates a mongo cluster with 3 nodes (1 primary and 2 secondary).
 
 > 1. docker exec -it mongo-primary mongosh
 > 2. rs.status()
+
+
+## Testing the connection
+
+> docker compose up mongo-connection-test

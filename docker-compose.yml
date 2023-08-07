@@ -1,0 +1,43 @@
+version: '3'
+services:
+  mongo-primary:
+    image: mongo:latest
+    container_name: mongo-primary
+    volumes:
+      - ./data/mongo-primary:/data/db
+    command: ["--replSet", "rs0"]
+    depends_on:
+      - mongo-secondary-1
+      - mongo-secondary-2
+    ports:
+      - "27017:27017"
+
+  mongo-secondary-1:
+    image: mongo:latest
+    container_name: mongo-secondary-1
+    volumes:
+      - ./data/mongo-secondary-1:/data/db
+    command: ["--replSet", "rs0"]
+
+  mongo-secondary-2:
+    image: mongo:latest
+    container_name: mongo-secondary-2
+    volumes:
+      - ./data/mongo-secondary-2:/data/db
+    command: ["--replSet", "rs0"]
+
+  setup-replicas-mongo:
+    image: mongo:latest
+    command: ["sh", "-c", "sleep 20 && mongosh --host mongo-primary:27017 /setup-replicas.js"]
+    volumes:
+      - ./data:/data
+      - ./scripts/setup-replicas.js:/setup-replicas.js
+    depends_on:
+      - mongo-primary
+
+  mongo-connection-test:
+    build:
+      context: ./example-app
+      dockerfile: Dockerfile
+    depends_on:
+      - mongo-primary

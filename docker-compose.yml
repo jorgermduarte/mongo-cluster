@@ -1,43 +1,84 @@
 version: '3'
 services:
-  mongo-primary:
-    image: mongo:latest
-    container_name: mongo-primary
+  mongo-setup:
+    container_name: mongo-setup
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    networks:
+      default:
     volumes:
-      - ./data/mongo-primary:/data/db
-    command: ["--replSet", "rs0"]
-    depends_on:
-      - mongo-secondary-1
-      - mongo-secondary-2
+      - ./scripts:/scripts      # Ensure the './scripts' directory exists with the 'setupReplicaSet.sh' file
+    entrypoint: ["/scripts/setupReplicaSet.sh"]     # Call the 'setupReplicaSet.sh' script on container init
+    depends_on:     # Wait for the 3 DB containers to spin up first
+      - mongo1
+      - mongo2
+      - mongo3
+
+  mongo1:
+    hostname: mongo1      # You need to map this hostname to 127.0.0.1 in your /etc/hosts file
+    container_name: mongo1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - 27017
     ports:
-      - "27017:27017"
-
-  mongo-secondary-1:
-    image: mongo:latest
-    container_name: mongo-secondary-1
+      - 27017:27017
+    networks:
+      default:
+    restart: always
     volumes:
-      - ./data/mongo-secondary-1:/data/db
-    command: ["--replSet", "rs0"]
+      - ./mongo-volumes/mongo1/data/db:/data/db     # Create a volume to persist data
+    entrypoint: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0", "--journal", "--dbpath", "/data/db", "--port", "27017"]
 
-  mongo-secondary-2:
-    image: mongo:latest
-    container_name: mongo-secondary-2
+  mongo2:
+    hostname: mongo2      # You need to map this hostname to 127.0.0.1 in your /etc/hosts file
+    container_name: mongo2
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - 27018
+    ports:
+      - 27018:27018
+    networks:
+      default:
+    restart: always
     volumes:
-      - ./data/mongo-secondary-2:/data/db
-    command: ["--replSet", "rs0"]
+      - ./mongo-volumes/mongo2/data/db:/data/db     # Create a volume to persist data
+    entrypoint: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0", "--journal", "--dbpath", "/data/db", "--port", "27018"]
 
-  setup-replicas-mongo:
-    image: mongo:latest
-    command: ["sh", "-c", "sleep 20 && mongosh --host mongo-primary:27017 /setup-replicas.js"]
+  mongo3:
+    hostname: mongo3      # You need to map this hostname to 127.0.0.1 in your /etc/hosts file
+    container_name: mongo3
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - 27019
+    ports:
+      - 27019:27019
+    networks:
+      default:
+    restart: always
     volumes:
-      - ./data:/data
-      - ./scripts/setup-replicas.js:/setup-replicas.js
-    depends_on:
-      - mongo-primary
+      - ./mongo-volumes/mongo3/data/db:/data/db     # Create a volume to persist data
+    entrypoint: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0", "--journal", "--dbpath", "/data/db", "--port", "27019"]
 
   mongo-connection-test:
     build:
       context: ./example-app
       dockerfile: Dockerfile
     depends_on:
-      - mongo-primary
+      - mongo1
+
+  backup-service:
+    build:
+      context: ./backup-service
+      dockerfile: Dockerfile
+    command: npm start
+    depends_on:
+      - mongo1
+

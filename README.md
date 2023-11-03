@@ -1,6 +1,8 @@
-# mongo-cluster
+# mongo-replication
 
-This example creates a mongo cluster with 3 nodes (1 primary and 2 secondary).
+This example creates a mongo replication with 3 nodes (1 primary and 2 secondary).
+
+![Replication Nodes](images/nodes.png)
 
 > The setup_replicas.sh initiates the replicas.
 
@@ -14,23 +16,26 @@ This example creates a mongo cluster with 3 nodes (1 primary and 2 secondary).
 
 - The secondaries replicate the primary’s oplog and apply the operations to their data sets such that the secondaries’ data sets reflect the primary’s data set. If the primary is unavailable, the replica set will elect a secondary to be primary. For more information on secondary members, see Replica Set Secondary Members.
 
-
-![Replication in Mongodb](images/image.png)
-
-
 > for more information read : https://www.mongodb.com/docs/v3.0/core/replication-introduction/
+
 
 
 ## Executing
 
-> docker compose up setup-replicas-mongo -d
+> docker compose up mongo-setup --build -d
 
-## Testing the configuration
+## Testing the connection ( connecting thru an application on containers)
 
-> 1. docker exec -it mongo-primary mongosh
-> 2. rs.status()
+> docker compose up mongo-connection-test --build
 
+you should notice in the output: **"Connected to mongo1 successfully"**
 
-## Testing the connection
+![Connection Test](images/connection_test.png)
 
-> docker compose up mongo-connection-test
+## Running the backup service
+
+> docker compose up backup-service --build -d
+
+A new backup with a random uuid will be created on the app/temp_backup directory
+
+![Backup example](images/backup_example.png)

@@ -4,10 +4,6 @@ This example creates a mongo replication with 3 nodes (1 primary and 2 secondary
 
 ![Replication Nodes](images/nodes.png)
 
-> The setup_replicas.sh initiates the replicas.
-
-> The schedule_backup.sh creates a cron job to run the backup-service everyday at midnight.
-
 ## Replication in mongodb
 
 -  A replica set is a group of mongod instances that maintain the same data set. A replica set contains several data bearing nodes and optionally one arbiter node. Of the data bearing nodes, one and only one member is deemed the primary node, while the other nodes are deemed secondary nodes.
